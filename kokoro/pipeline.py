@@ -433,7 +433,7 @@ class KPipeline:
                     )
 
             # Special handling for Portuguese
-            else:
+            elif self.lang_code == "p":
                 logger.debug(
                     f"Processing Portuguese text: {graphemes[:50]}{'...' if len(graphemes) > 50 else ''}"
                 )
