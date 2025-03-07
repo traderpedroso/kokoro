@@ -229,8 +229,6 @@ class KPipeline:
             # American English: ɾ => T
             if self.lang_code == "a":
                 t.phonemes = "" if t.phonemes is None else t.phonemes.replace("ɾ", "T")
-            else:
-                t.phonemes = ""
             next_ps = t.phonemes + (" " if t.whitespace else "")
             next_pcount = pcount + len(next_ps.rstrip())
             if next_pcount > 510:
