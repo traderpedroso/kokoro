@@ -186,14 +186,14 @@ class KPipeline:
         return self.voices[voice]
 
     @staticmethod
-    def tokens_to_ps(tokens: List[en.MToken]) -> str:
+    def tokens_to_ps(tokens: List[espeak.MToken]) -> str:
         return "".join(
             t.phonemes + (" " if t.whitespace else "") for t in tokens
         ).strip()
 
     @staticmethod
     def waterfall_last(
-        tokens: List[en.MToken],
+        tokens: List[espeak.MToken],
         next_count: int,
         waterfall: List[str] = ["!.?…", ":;", ",—"],
         bumps: List[str] = [")", "”"],
@@ -217,12 +217,12 @@ class KPipeline:
         return len(tokens)
 
     @staticmethod
-    def tokens_to_text(tokens: List[en.MToken]) -> str:
+    def tokens_to_text(tokens: List[espeak.MToken]) -> str:
         return "".join(t.text + t.whitespace for t in tokens).strip()
 
     def en_tokenize(
-        self, tokens: List[en.MToken]
-    ) -> Generator[Tuple[str, str, List[en.MToken]], None, None]:
+        self, tokens: List[espeak.MToken]
+    ) -> Generator[Tuple[str, str, List[espeak.MToken]], None, None]:
         tks = []
         pcount = 0
         for t in tokens:
@@ -263,7 +263,7 @@ class KPipeline:
 
     def generate_from_tokens(
         self,
-        tokens: Union[str, List[en.MToken]],
+        tokens: Union[str, List[espeak.MToken]],
         voice: str,
         speed: float = 1,
         model: Optional[KModel] = None,
@@ -316,7 +316,7 @@ class KPipeline:
             yield self.Result(graphemes=gs, phonemes=ps, tokens=tks, output=output)
 
     @staticmethod
-    def join_timestamps(tokens: List[en.MToken], pred_dur: torch.LongTensor):
+    def join_timestamps(tokens: List[espeak.MToken], pred_dur: torch.LongTensor):
         # Multiply by 600 to go from pred_dur frames to sample_rate 24000
         # Equivalent to dividing pred_dur frames by 40 to get timestamp in seconds
         # We will count nice round half-frames, so the divisor is 80
@@ -357,7 +357,7 @@ class KPipeline:
     class Result:
         graphemes: str
         phonemes: str
-        tokens: Optional[List[en.MToken]] = None
+        tokens: Optional[List[espeak.MToken]] = None
         output: Optional[KModel.Output] = None
         text_index: Optional[int] = None
 
