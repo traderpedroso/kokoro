@@ -408,7 +408,7 @@ class KPipeline:
                 continue
 
             # English processing (unchanged)
-            if self.lang_code in "abp":
+            if self.lang_code in "ab":
                 logger.debug(
                     f"Processing English text: {graphemes[:50]}{'...' if len(graphemes) > 50 else ''}"
                 )
@@ -432,7 +432,75 @@ class KPipeline:
                         text_index=graphemes_index,
                     )
 
-            # Non-English processing with chunking
+            # Special handling for Portuguese
+            elif self.lang_code == "p":
+                logger.debug(
+                    f"Processing Portuguese text: {graphemes[:50]}{'...' if len(graphemes) > 50 else ''}"
+                )
+
+                # Split long text into smaller chunks (roughly 400 characters each)
+                chunk_size = 400
+                chunks = []
+
+                # Try to split on sentence boundaries first
+                sentences = re.split(r"([.!?]+)", graphemes)
+                current_chunk = ""
+
+                for i in range(0, len(sentences), 2):
+                    sentence = sentences[i]
+                    # Add the punctuation back if it exists
+                    if i + 1 < len(sentences):
+                        sentence += sentences[i + 1]
+
+                    if len(current_chunk) + len(sentence) <= chunk_size:
+                        current_chunk += sentence
+                    else:
+                        if current_chunk:
+                            chunks.append(current_chunk.strip())
+                        current_chunk = sentence
+
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+
+                # If no chunks were created (no sentence boundaries), fall back to character-based chunking
+                if not chunks:
+                    chunks = [
+                        graphemes[i : i + chunk_size]
+                        for i in range(0, len(graphemes), chunk_size)
+                    ]
+
+                # Process each chunk
+                for chunk in chunks:
+                    if not chunk.strip():
+                        continue
+
+                    # Get phonemes and tokens directly from g2p
+                    phonemes, tokens = self.g2p(chunk)
+                    if not phonemes:
+                        continue
+                    elif len(phonemes) > 510:
+                        logger.warning(
+                            f"Truncating len(phonemes) == {len(phonemes)} > 510"
+                        )
+                        phonemes = phonemes[:510]
+
+                    output = (
+                        KPipeline.infer(model, phonemes, pack, speed) if model else None
+                    )
+
+                    # Add timestamps to tokens if available
+                    if output is not None and output.pred_dur is not None and tokens:
+                        KPipeline.join_timestamps(tokens, output.pred_dur)
+
+                    yield self.Result(
+                        graphemes=chunk,
+                        phonemes=phonemes,
+                        tokens=tokens,
+                        output=output,
+                        text_index=graphemes_index,
+                    )
+
+            # Non-English processing with chunking (for other languages)
             else:
                 # Split long text into smaller chunks (roughly 400 characters each)
                 # Using sentence boundaries when possible
